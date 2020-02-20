@@ -5,11 +5,11 @@
             "versionName": "Lightning Sharing",
             "versionDescription": "share records manually in Lightning",
             "versionNumber": "4.0.0.NEXT",
-            "package": "lightningSharing"
+            "package": "lightningSharing",
+            "default": true
         },
         {
-            "path": "implementation",
-            "default": true
+            "path": "implementation"
         }
     ],
     "namespace": "ltngsharing",
