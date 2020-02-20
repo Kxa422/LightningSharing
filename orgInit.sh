@@ -1,5 +1,5 @@
 sfdx force:org:create -a ltngshare -f config/project-scratch-def.json -s -d 1
-sfdx shane:github:src:install -g mshanemc -r community-boilerplate -p force-app
+sfdx shane:github:src:install -g mshanemc -r community-boilerplate -p force-app -c
 
 # for mobile
 sfdx force:user:password:generate
@@ -19,3 +19,5 @@ sfdx force:data:tree:import -f data/ReadOnlyTestObject__c.json
 sfdx force:user:create generatepassword=true FirstName=Test LastName=Privilege permsets=TestingPerms profileName="Standard User"
 
 sfdx force:data:tree:import -f data/ReadOnlyTestObject__c.json
+
+sfdx force:org:open
