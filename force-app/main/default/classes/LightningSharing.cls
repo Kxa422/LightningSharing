@@ -314,7 +314,7 @@ global static String getSharings(Id recordId){
 	}
 
 	private static boolean isStandard (String sobj){
-		if (sobj=='Account' || sobj=='Asset' || sobj=='Campaign' || sobj =='Case' || sobj=='Contact' || sobj=='Lead' || sobj=='Opportunity' || sobj=='User' ){
+		if (sobj=='Account' || sobj=='Asset' || sobj=='Campaign' || sobj =='Case' || sobj=='Contact' || sobj=='Lead' || sobj=='Opportunity' || sobj=='User' || sobj=='Order' ){
 			return true;
 		}
 		return false;
