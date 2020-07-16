@@ -1,0 +1,1 @@
+select ExternalSharingModel, InternalSharingModel, DeveloperName, QualifiedApiName from EntityDefinition where QualifiedApiName = 'ltngsharing__PrivateTestObject__c'

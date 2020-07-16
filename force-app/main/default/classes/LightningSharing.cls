@@ -2,6 +2,15 @@ global without sharing class LightningSharing {
 
 	global class SharingPermsException extends Exception{}
 
+	private static EntityDefinition getObjectSharingLevel(string objName) {
+		return  [select ExternalSharingModel, InternalSharingModel from EntityDefinition where QualifiedApiName =: objName limit 1];
+	}
+
+	@AuraEnabled(cacheable=true)
+	global static EntityDefinition getObjectSharingLevel(Id recordId){
+		return getObjectSharingLevel(objectTypeFromId(recordId));
+	}
+
 	@AuraEnabled
 	global static boolean canIEditPerms(Id recordId){
 		try {
@@ -11,7 +20,7 @@ global without sharing class LightningSharing {
 				System.Debug('edit allowed because user has full acesss or modify all permissions');
 				return true;
 			}
-		} catch (System.queryException e){
+		} catch (System.QueryException e){
 			//it's possible you can't even see that record and the queries are null!
 			return false;
 		}
@@ -31,7 +40,7 @@ global without sharing class LightningSharing {
 		// special handling for role => groups
 		if (UserOrGroupID.getSobjectType()==Schema.UserRole.SObjectType){
 			//it's a role...find the matching group?
-			list<group> matchingGroups = [select id, name, type from group where RelatedId =: UserOrGroupID and type = 'Role'];
+			list<Group> matchingGroups = [select id, name, type from Group where RelatedId =: UserOrGroupID and type = 'Role'];
 			if (matchingGroups.size()>1){
 				throw new AuraHandledException(Label.MultipleGroupsForRole);
 			}
@@ -239,20 +248,28 @@ global static String getSharings(Id recordId){
 			sh.UserOrGroupType = 'User';
 			sh.UserOrGroupName = UserMap.get(sh.UserOrGroupID).Name;
 			sh.SubType = huh(UserMap.get(sh.UserOrGroupID).UserType);
-			} else if (GroupMap.get(sh.UserOrGroupID)!=null){
-				sh.UserOrGroupType = 'Group';
-				sh.SubType = GroupMap.get(sh.UserOrGroupID).Type;
-				sh.UserOrGroupName = GroupMap.get(sh.UserOrGroupID).Name;
-				//special handling for roles
-				if (sh.SubType.contains('Role')){
-					sh.UserOrGroupName = RoleMap.get(GroupMap.get(sh.UserOrGroupID).RelatedId).Name;
-					sh.RoleId = GroupMap.get(sh.UserOrGroupID).RelatedId;
-				}
+		} else if (GroupMap.get(sh.UserOrGroupID)!=null){
+			sh.UserOrGroupType = 'Group';
+			sh.SubType = GroupMap.get(sh.UserOrGroupID).Type;
+			sh.UserOrGroupName = GroupMap.get(sh.UserOrGroupID).Name;
+			//special handling for roles
+			if (sh.SubType.contains('Role')){
+				sh.UserOrGroupName = RoleMap.get(GroupMap.get(sh.UserOrGroupID).RelatedId).Name;
+				sh.RoleId = GroupMap.get(sh.UserOrGroupID).RelatedId;
 			}
 		}
-
-		return JSON.serialize(output);
 	}
+
+	for (sharingHolder sh:output) {
+		// no sharing changes for owner.
+		// 
+		sh.NoneDisabled = false  || sh.RowCause == 'Owner';	
+		sh.ReadDisabled = false || sh.RowCause == 'Owner';
+		sh.EditDisabled = false  || sh.RowCause == 'Owner';
+	}
+
+	return JSON.serialize(output);
+}
 
 	@TestVisible private static String buildQuery(Id recordId){
 		String sobj = objectTypeFromId(recordId);
@@ -291,6 +308,9 @@ global static String getSharings(Id recordId){
 		global String AccessLevel {get;set;}
 		global String RowCause {get;set;}
 		global String RoleId {get;set;}
+		global Boolean ReadDisabled {get;set;}
+		global Boolean EditDisabled {get;set;}
+		global Boolean NoneDisabled {get;set;}
 	}
 
 	private static boolean isStandard (String sobj){
@@ -343,29 +363,8 @@ global static String getSharings(Id recordId){
 
 	@TestVisible
 	private static boolean sharingExists(String sobj){
-		//custom objects
-		if (sobj.contains('__c')){
-			Map<String, Schema.SObjectType> tokens = Schema.getGlobalDescribe();
-			if (  tokens.containsKey( getSharingTableName(sobj).toLowerCase() ) || tokens.containsKey('ltngsharing__' + getSharingTableName(sobj).toLowerCase()) ) {
-				return true;
-			}
-		} else {
-			String tableName = getSharingTableName(sobj);
-			String query = 'select count() from ' + tableName;
-			try {
-				integer count = database.countQuery(query);
-				if (count > 0) {
-					return true;
-				} else {
-					return false;
-				}
-			} catch (exception e){
-				System.debug(e);
-			}
-			return false;
-		}
-
-		return false;
+		EntityDefinition ED = getObjectSharingLevel(sobj);
+		return ED.InternalSharingModel != 'Edit' && ED.ExternalSharingModel != 'Edit';
 	}
 
 }
