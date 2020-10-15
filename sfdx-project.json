@@ -12,7 +12,6 @@
             "path": "implementation"
         }
     ],
-    "namespace": "ltngsharing",
     "sfdcLoginUrl": "https://login.salesforce.com",
     "sourceApiVersion": "47.0",
     "packageAliases": {

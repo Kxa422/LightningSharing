@@ -1,5 +1,4 @@
-sfdx force:org:create -a ltngshare -f config/project-scratch-def.json -s -d 1
-sfdx shane:github:src:install -g mshanemc -r community-boilerplate -p force-app -c
+sfdx force:org:create -a ltngshare -f config/project-scratch-def.json -s -d 30
 
 # for mobile
 sfdx force:user:password:generate

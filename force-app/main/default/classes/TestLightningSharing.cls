@@ -1,350 +1,480 @@
 @isTest
 private class TestLightningSharing {
-
-	static testMethod void testSOSL() {
-  	LightningSharing.doSOSL('McLaughlin', 'Lead');
-  }
-
-  static testMethod void testReturning() {
-
-    string uq = LightningSharing.getReturning('User');
-    system.assertEquals(uq, 'User(Id, Name, UserType WHERE UserType in (\'Standard\', \'PowerCustomerSuccess\', \'PowerPartner\'))');
-
-    uq = LightningSharing.getReturning('Group');
-    system.assertEquals(uq, 'Group(Id, Name, Type)');
-
-    uq = LightningSharing.getReturning('Custom__c');
-    system.assertEquals(uq, 'Custom__c(Id, Name)');
-
-  	uq = LightningSharing.getReturning('Lead');
-    system.assertEquals(uq, 'Lead(Id, Name)');
-
-  }
-
-  static testMethod void testuserTypes() {
-  	LightningSharing.huh('PowerCustomerSuccess');
-  	LightningSharing.huh('PowerPartner');
-  	LightningSharing.huh('CustomerSuccess');
-  	LightningSharing.huh('CsnOnly');
-  	LightningSharing.huh('CSPLitePortal');
-  	system.assertEquals('MadeUpStuff', LightningSharing.huh('MadeUpStuff'));
-  }
-
-  static testMethod void testInnerClass(){
-  	LightningSharing.sharingHolder sh = new LightningSharing.sharingHolder();
-  	sh.UserOrGroupName = 'test';
-  	sh.SubType = 'test';
-  	sh.UserOrGroupType = 'test';
-  	sh.UserOrGroupID = 'test';
-  	sh.AccessLevel = 'test';
-  	sh.RowCause = 'test';
-
-    system.assertEquals(sh.UserOrGroupName, 'test');
-    system.assertEquals(sh.SubType, 'test');
-    system.assertEquals(sh.UserOrGroupType, 'test');
-    system.assertEquals(sh.UserOrGroupID, 'test');
-    system.assertEquals(sh.AccessLevel, 'test');
-    system.assertEquals(sh.RowCause, 'test');
-  }
-
-  static testMethod void testGetSharings() {
-  	list<lead> l = [select id from lead];
-		try {
-  		LightningSharing.getSharings(l[0].id);
-		} catch (AuraHandledException ahe){
-
-		}
-
-  	list<Opportunity> o = [select id from Opportunity];
-
-		try {
-  		LightningSharing.getSharings(l[0].id);
-		} catch (AuraHandledException ahe){
-
-		}
-
-    list<PrivateTestObject__c> ptos = [select id from PrivateTestObject__c];
-    list<ReadOnlyTestObject__c> rotos = [select id from ReadOnlyTestObject__c];
-
-    LightningSharing.getSharings(ptos[0].id);
-    LightningSharing.getSharings(rotos[0].id);
-  }
-
-  static testMethod void testcanIEditPermsAdmin() {
-  	list<lead> l = [select id from lead];
-  	LightningSharing.canIEditPerms(l[0].id);
-
-    list<PrivateTestObject__c> ptos = [select id from PrivateTestObject__c];
-    list<ReadOnlyTestObject__c> rotos = [select id from ReadOnlyTestObject__c];
-
-    boolean perm = LightningSharing.canIEditPerms(ptos[0].id);
-    system.assertEquals(perm, true);
-    perm = LightningSharing.canIEditPerms(rotos[0].id);
-    system.assertEquals(perm, true);
-
-  }
-
-  static testMethod void testcanIEditPermsAdminNonOwner() {
-    list<PrivateTestObject__c> ptos = [select id from PrivateTestObject__c];
-    list<ReadOnlyTestObject__c> rotos = [select id from ReadOnlyTestObject__c];
-
-    user u = createAdmin();
-    boolean perm1;
-    boolean perm2;
-
-  	system.runAs(u){
-      perm1 =LightningSharing.canIEditPerms(ptos[0].id);
-      perm2 =LightningSharing.canIEditPerms(rotos[0].id);
-  	}
-
-    system.assertEquals(perm1, true);
-    system.assertEquals(perm2, true);
-
-  }
-
-  static testMethod void testDelete() {
-
-  	//list<lead> l = [select id from Lead];
-    list<PrivateTestObject__c> ptos = [select Id from PrivateTestObject__c];
-  	user u = createUsers(1)[0];
-
-    LightningSharing.upsertPerm(u.id, ptos[0].id, 'Edit');
-
-  	LightningSharing.deletePerm(u.id, ptos[0].id);
-  }
-
-
-  static testMethod void testUpsertPerm() {
-  	list<Opportunity> o = [select id from Opportunity];
-  	list<lead> l = [select id from Lead];
-    list<PrivateTestObject__c> ptos = [select id from PrivateTestObject__c];
-    list<ReadOnlyTestObject__c> rotos = [select id from ReadOnlyTestObject__c];
-
-  	user u = createUsers(1)[0];
-
-    LightningSharing.upsertPerm(u.id, ptos[0].id, 'Edit');
-    LightningSharing.upsertPerm(u.id, ptos[0].id, 'Read');
-    LightningSharing.upsertPerm(u.id, ptos[0].id, 'Edit');
-
-    LightningSharing.getSharings(ptos[0].id);
-
-    LightningSharing.deletePerm(u.id, ptos[0].id);
-
-
-    LightningSharing.upsertPerm(u.id, rotos[0].id, 'Edit');
-    LightningSharing.getSharings(rotos[0].id);
-    LightningSharing.deletePerm(u.id, rotos[0].id);
-
-  	try {
-  		LightningSharing.upsertPerm(u.id, o[0].id, 'Edit');
-  		LightningSharing.deletePerm(u.id, o[0].id);
-  	} catch (exception e){
-  		//ok, sharing may not be on
-  		system.debug(e);
-  	}
-
-  	try {
-  		LightningSharing.upsertPerm(u.id, o[0].id, 'Read');
-  		LightningSharing.deletePerm(u.id, o[0].id);
-  	} catch (exception e){
-  		system.debug(e);
-  		//ok, sharing may not be on
-  	}
-
-  	try {
-  		LightningSharing.upsertPerm(u.id, l[0].id, 'Edit');
-  		LightningSharing.deletePerm(u.id, l[0].id);
-  	} catch (exception e){
-  		//ok, sharing may not be on
-  		system.debug(e);
-  	}
-
-  	try {
-  		LightningSharing.upsertPerm(u.id, l[0].id, 'Read');
-  		LightningSharing.deletePerm(u.id, l[0].id);
-  	} catch (exception e){
-  		system.debug(e);
-  		//ok, sharing may not be on
-  	}
-  }
-
-  static testMethod void testStringStuff(){
-  	LightningSharing.getLookupField('Account');
-  	LightningSharing.getAccessLevelField('Account');
-  	system.assertEquals('AccountShare', LightningSharing.getSharingTableName('Account'));
-
-  	LightningSharing.getLookupField('Custom__c');
-  	LightningSharing.getAccessLevelField('Custom__c');
-  	LightningSharing.getSharingTableName('Custom__c');
-		system.assertEquals('Custom__Share', LightningSharing.getSharingTableName('Custom__c'));
-
-		system.assertEquals('Namespace__Custom__Share', LightningSharing.getSharingTableName('Namespace__Custom__c'));
-  }
-
-
-  static testMethod void testBuildQuery(){
-  	list<lead> l = [select id from lead];
-  	LightningSharing.buildQuery(l[0].id);
-  }
-
-  static testMethod void testcanIEditPermsNonAdmin() {
-  	//list<lead> l = [select id from lead];
-    list<PrivateTestObject__c> ptos = [select id from PrivateTestObject__c];
-    list<ReadOnlyTestObject__c> rotos = [select id from ReadOnlyTestObject__c];
-
-  	list<user> users = createUsers(1);
-
-    LightningSharing.upsertPerm(users[0].id, ptos[0].id, 'Edit');
-    LightningSharing.upsertPerm(users[0].id, rotos[0].id, 'Edit');
-
-  	System.RunAs(users[0]){
-
-      //LightningSharing.getSharings(l[0].id);
-      //LightningSharing.getSharings(ptos[0].id);
-      //LightningSharing.getSharings(rotos[0].id);
-
-      //system.assert(LightningSharing.canIEditPerms(l[0].id), false);
-  		system.assertEquals(LightningSharing.canIEditPerms(ptos[0].id), false);
-      system.assertEquals(LightningSharing.canIEditPerms(rotos[0].id), false);
-
-  	}
-  }
-
-  static testMethod void testGroupStuff(){
-    list<group> groups = [select id from group where Name = 'the knights who say nee'];
-    list<lead> l = [select id from lead];
-    list<PrivateTestObject__c> ptos = [select id from PrivateTestObject__c];
-    list<ReadOnlyTestObject__c> rotos = [select id from ReadOnlyTestObject__c];
-
-    list<user> users = createUsers(2);
-
-    list<GroupMember> gms = new list<GroupMember>();
-    gms.add(new GroupMember(GroupId=groups[0].id, UserOrGroupId=users[0].id));
-    gms.add(new GroupMember(GroupId=groups[0].id, UserOrGroupId=users[1].id));
-
-    insert gms;
-
-    test.startTest();
-    system.RunAs(createAdmin()){
-
-      //LightningSharing.upsertPerm(groups[0].id, l[0].id, 'Read');
-      LightningSharing.upsertPerm(groups[0].id, ptos[0].id, 'Read');
-      //LightningSharing.upsertPerm(groups[0].id, rotos[0].id, 'Read');
-
-			try{
-      	LightningSharing.getSharings(l[0].id);
-			} catch (AuraHandledException ahe){
-
-			}
-      LightningSharing.getSharings(ptos[0].id);
-      LightningSharing.getSharings(rotos[0].id);
+    @isTest
+    static void testSOSL() {
+        LightningSharing.doSOSL('McLaughlin', 'Lead');
     }
-    test.stopTest();
 
-  }
+    @isTest
+    static void testReturning() {
+        string uq = LightningSharing.getReturning('User');
+        system.assertEquals(
+            uq,
+            'User(Id, Name, UserType WHERE UserType in (\'Standard\', \'PowerCustomerSuccess\', \'PowerPartner\'))'
+        );
 
-	static testMethod void testSharingExistsAccount(){
-		// should not exist--accounts are public r/w
+        uq = LightningSharing.getReturning('Group');
+        system.assertEquals(uq, 'Group(Id, Name, Type)');
 
-		// not assertable because I don't know what the sharing is like in the destination org!
-		LightningSharing.sharingExists('Account');
+        uq = LightningSharing.getReturning('Custom__c');
+        system.assertEquals(uq, 'Custom__c(Id, Name)');
 
+        uq = LightningSharing.getReturning('Lead');
+        system.assertEquals(uq, 'Lead(Id, Name)');
+    }
 
-		System.assertEquals(true, LightningSharing.sharingExists('ltngsharing__PrivateTestObject__c'));
-		System.assertEquals(true, LightningSharing.sharingExists('ltngsharing__ReadOnlyTestObject__c'));
+    @isTest
+    static void testuserTypes() {
+        LightningSharing.huh('PowerCustomerSuccess');
+        LightningSharing.huh('PowerPartner');
+        LightningSharing.huh('CustomerSuccess');
+        LightningSharing.huh('CsnOnly');
+        LightningSharing.huh('CSPLitePortal');
+        system.assertEquals('MadeUpStuff', LightningSharing.huh('MadeUpStuff'));
+    }
 
-		// Map<String, Schema.SObjectType> tokens = Schema.getGlobalDescribe();
-		// for (string s:tokens.keySet()){
-		// 	system.debug(s);
-		// }
-	}
+    @isTest
+    static void testInnerClass() {
+        LightningSharing.sharingHolder sh = new LightningSharing.sharingHolder();
+        sh.UserOrGroupName = 'test';
+        sh.SubType = 'test';
+        sh.UserOrGroupType = 'test';
+        sh.UserOrGroupID = 'test';
+        sh.AccessLevel = 'test';
+        sh.RowCause = 'test';
 
-	
+        system.assertEquals(sh.UserOrGroupName, 'test');
+        system.assertEquals(sh.SubType, 'test');
+        system.assertEquals(sh.UserOrGroupType, 'test');
+        system.assertEquals(sh.UserOrGroupID, 'test');
+        system.assertEquals(sh.AccessLevel, 'test');
+        system.assertEquals(sh.RowCause, 'test');
+    }
 
-  @testSetup static void makeData(){
-    	//make some object for testing, like a lead
-    	lead l = new lead();
-    	l.Lastname = 'McLaughlin';
-    	l.company = 'Salesforce';
-    	l.email = 'm.shane.mclaughlin@gmail.com';
-    	insert l;
+    @isTest
+    static void testGetSharings() {
+        list<lead> l = [SELECT id FROM lead];
+        try {
+            LightningSharing.getSharings(l[0].id);
+        } catch (AuraHandledException ahe) {
+        }
 
-    	account a = new account();
-    	a.Name = 'Ink, inc.';
-    	insert a;
+        list<Opportunity> o = [SELECT id FROM Opportunity];
 
-    	contact c = new contact();
-    	c.accountId = a.id;
-    	c.FirstName = 'Sarah';
-    	c.LastName = 'McLaughlin';
-    	c.Email = 'sarah@gmail.com';
-    	insert c;
+        try {
+            LightningSharing.getSharings(l[0].id);
+        } catch (AuraHandledException ahe) {
+        }
 
-    	Opportunity o = new Opportunity();
-    	o.accountId = a.id;
-    	o.closeDate = system.today();
-    	o.Name = 'biggest deal ever';
+        list<PrivateTestObject__c> ptos = [SELECT id FROM PrivateTestObject__c];
+        list<ReadOnlyTestObject__c> rotos = [
+            SELECT id
+            FROM ReadOnlyTestObject__c
+        ];
 
-    	o.StageName = [select MasterLabel from OpportunityStage where IsClosed = false][0].MasterLabel;
-    	insert o;
+        LightningSharing.getSharings(ptos[0].id);
+        LightningSharing.getSharings(rotos[0].id);
+    }
 
-      PrivateTestObject__c pto = new PrivateTestObject__c();
-      insert pto;
+    @isTest
+    static void testcanIEditPermsAdmin() {
+        list<lead> l = [SELECT id FROM lead];
+        LightningSharing.canIEditPerms(l[0].id);
 
-      ReadOnlyTestObject__c roto = new ReadOnlyTestObject__c();
-      insert roto;
+        list<PrivateTestObject__c> ptos = [SELECT id FROM PrivateTestObject__c];
+        list<ReadOnlyTestObject__c> rotos = [
+            SELECT id
+            FROM ReadOnlyTestObject__c
+        ];
 
-      group g = new group();
-      g.Name = 'the knights who say nee';
-      g.Type = 'Regular';
+        boolean perm = LightningSharing.canIEditPerms(ptos[0].id);
+        system.assertEquals(perm, true);
+        perm = LightningSharing.canIEditPerms(rotos[0].id);
+        system.assertEquals(perm, true);
+    }
 
-      insert g;
+    @isTest
+    static void testcanIEditPermsAdminNonOwner() {
+        list<PrivateTestObject__c> ptos = [SELECT id FROM PrivateTestObject__c];
+        list<ReadOnlyTestObject__c> rotos = [
+            SELECT id
+            FROM ReadOnlyTestObject__c
+        ];
 
+        user u = createAdmin();
+        boolean perm1;
+        boolean perm2;
 
-  }
+        System.runAs(u) {
+            perm1 = LightningSharing.canIEditPerms(ptos[0].id);
+            perm2 = LightningSharing.canIEditPerms(rotos[0].id);
+        }
 
+        system.assertEquals(perm1, true);
+        system.assertEquals(perm2, true);
+    }
 
+    @isTest
+    static void testDelete() {
+        //list<lead> l = [select id from Lead];
+        list<PrivateTestObject__c> ptos = [SELECT Id FROM PrivateTestObject__c];
+        user u = createUsers(1)[0];
 
+        LightningSharing.upsertPerm(u.id, ptos[0].id, 'Edit');
 
-  public static user createAdmin(){
-  	Profile p = [SELECT Id FROM Profile WHERE Name='System Administrator'];
+        LightningSharing.deletePerm(u.id, ptos[0].id);
+    }
 
-		// create User
-		User u = new User();
+    @isTest
+    static void testUpsertPerm() {
+        list<Opportunity> o = [SELECT id FROM Opportunity];
+        list<lead> l = [SELECT id FROM Lead];
+        list<PrivateTestObject__c> ptos = [SELECT id FROM PrivateTestObject__c];
+        list<ReadOnlyTestObject__c> rotos = [
+            SELECT id
+            FROM ReadOnlyTestObject__c
+        ];
 
-		u.FirstName = 'A';
-		u.LastName = 'S';
-		u.Email = 'test@testLightningSharing2017.com';
-		u.Username = 'astest@testLightningSharing2017.com';
-		u.Alias = 'astest';
-		u.ProfileId = p.Id;
-		u.TimeZoneSidKey    = 'America/Denver';
-		u.LocaleSidKey      = 'en_US';
-		u.EmailEncodingKey  = 'UTF-8';
-		u.LanguageLocaleKey = 'en_US';
+        user u = createUsers(1)[0];
 
-		insert u;
-		system.debug('u contains ' + u);
-		return u;
-	}
+        LightningSharing.upsertPerm(u.id, ptos[0].id, 'Edit');
+        LightningSharing.upsertPerm(u.id, ptos[0].id, 'Read');
+        LightningSharing.upsertPerm(u.id, ptos[0].id, 'Edit');
 
-	public static list<user> createUsers(integer numberOfUsers){
-		list<user> users = new list<user>();
+        LightningSharing.getSharings(ptos[0].id);
 
-		Profile p = [SELECT Id FROM Profile WHERE Name='Standard User'];
+        LightningSharing.deletePerm(u.id, ptos[0].id);
 
+        LightningSharing.upsertPerm(u.id, rotos[0].id, 'Edit');
+        LightningSharing.getSharings(rotos[0].id);
+        LightningSharing.deletePerm(u.id, rotos[0].id);
 
-		for (integer i=0; i<numberOfUsers; i++){
-			string x = string.valueOf(i);
-			User u = new User(Alias = 't'+x, Email='standarduser'+x+'@testLightningSharing2017.msm',
-				EmailEncodingKey='UTF-8', LastName='Testing' + x, LanguageLocaleKey='en_US',
-				LocaleSidKey='en_US', ProfileId = p.Id,
-				TimeZoneSidKey='America/Los_Angeles', UserName='standarduser'+x+'@testLightningSharing2017.msm');
-			users.add(u);
-		}
+        try {
+            LightningSharing.upsertPerm(u.id, o[0].id, 'Edit');
+            LightningSharing.deletePerm(u.id, o[0].id);
+        } catch (exception e) {
+            //ok, sharing may not be on
+            system.debug(e);
+        }
 
-		insert users;
-		return users;
-	}
+        try {
+            LightningSharing.upsertPerm(u.id, o[0].id, 'Read');
+            LightningSharing.deletePerm(u.id, o[0].id);
+        } catch (exception e) {
+            system.debug(e);
+            //ok, sharing may not be on
+        }
 
+        try {
+            LightningSharing.upsertPerm(u.id, l[0].id, 'Edit');
+            LightningSharing.deletePerm(u.id, l[0].id);
+        } catch (exception e) {
+            //ok, sharing may not be on
+            system.debug(e);
+        }
+
+        try {
+            LightningSharing.upsertPerm(u.id, l[0].id, 'Read');
+            LightningSharing.deletePerm(u.id, l[0].id);
+        } catch (exception e) {
+            system.debug(e);
+            //ok, sharing may not be on
+        }
+    }
+
+    @isTest
+    static void testStringStuff() {
+        LightningSharing.getLookupField('Account');
+        LightningSharing.getAccessLevelField('Account');
+        system.assertEquals(
+            'AccountShare',
+            LightningSharing.getSharingTableName('Account')
+        );
+
+        LightningSharing.getLookupField('Custom__c');
+        LightningSharing.getAccessLevelField('Custom__c');
+        LightningSharing.getSharingTableName('Custom__c');
+        system.assertEquals(
+            'Custom__Share',
+            LightningSharing.getSharingTableName('Custom__c')
+        );
+
+        system.assertEquals(
+            'Namespace__Custom__Share',
+            LightningSharing.getSharingTableName('Namespace__Custom__c')
+        );
+    }
+
+    @isTest
+    static void testBuildQuery() {
+        list<lead> l = [SELECT id FROM lead];
+        LightningSharing.buildQuery(l[0].id);
+    }
+
+    @isTest
+    static void testcanIEditPermsNonAdmin() {
+        //list<lead> l = [select id from lead];
+        list<PrivateTestObject__c> ptos = [SELECT id FROM PrivateTestObject__c];
+        list<ReadOnlyTestObject__c> rotos = [
+            SELECT id
+            FROM ReadOnlyTestObject__c
+        ];
+
+        list<user> users = createUsers(1);
+
+        LightningSharing.upsertPerm(users[0].id, ptos[0].id, 'Edit');
+        LightningSharing.upsertPerm(users[0].id, rotos[0].id, 'Edit');
+
+        System.runAs(users[0]) {
+            //LightningSharing.getSharings(l[0].id);
+            //LightningSharing.getSharings(ptos[0].id);
+            //LightningSharing.getSharings(rotos[0].id);
+
+            //system.assert(LightningSharing.canIEditPerms(l[0].id), false);
+            system.assertEquals(
+                LightningSharing.canIEditPerms(ptos[0].id),
+                false
+            );
+            system.assertEquals(
+                LightningSharing.canIEditPerms(rotos[0].id),
+                false
+            );
+        }
+    }
+
+    @isTest
+    static void testGroupStuff() {
+        list<group> groups = [
+            SELECT id
+            FROM group
+            WHERE Name = 'the knights who say nee'
+        ];
+        list<lead> l = [SELECT id FROM lead];
+        list<PrivateTestObject__c> ptos = [SELECT id FROM PrivateTestObject__c];
+        list<ReadOnlyTestObject__c> rotos = [
+            SELECT id
+            FROM ReadOnlyTestObject__c
+        ];
+
+        list<user> users = createUsers(2);
+
+        list<GroupMember> gms = new List<GroupMember>();
+        gms.add(
+            new GroupMember(GroupId = groups[0].id, UserOrGroupId = users[0].id)
+        );
+        gms.add(
+            new GroupMember(GroupId = groups[0].id, UserOrGroupId = users[1].id)
+        );
+
+        insert gms;
+        UserRole r = [
+            SELECT Id
+            FROM UserRole
+            WHERE DeveloperName = 'MyCustomRole'
+        ];
+        test.startTest();
+        System.runAs(createAdmin()) {
+            //LightningSharing.upsertPerm(groups[0].id, l[0].id, 'Read');
+            LightningSharing.upsertPerm(groups[0].id, ptos[0].id, 'Read');
+            lightningSharing.upsertPerm(r.id, ptos[0].id, 'Read');
+
+            try {
+                LightningSharing.getSharings(l[0].id);
+            } catch (AuraHandledException ahe) {
+            }
+            LightningSharing.getSharings(ptos[0].id);
+            LightningSharing.getSharings(rotos[0].id);
+
+            LightningSharing.deletePerm(groups[0].id, ptos[0].id);
+            LightningSharing.deletePerm(r.id, ptos[0].id);
+        }
+        test.stopTest();
+    }
+
+    @isTest
+    static void testSharingExistsAccount() {
+        // should not exist--accounts are public r/w
+
+        // not assertable because I don't know what the sharing is like in the destination org!
+        LightningSharing.sharingExists('Account');
+
+        System.assertEquals(
+            true,
+            LightningSharing.sharingExists('PrivateTestObject__c')
+        );
+        System.assertEquals(
+            true,
+            LightningSharing.sharingExists('ReadOnlyTestObject__c')
+        );
+        System.assertNotEquals(
+            null,
+            LightningSharing.getObjectSharingLevel(
+                [SELECT Id FROM ReadOnlyTestObject__c LIMIT 1]
+                .Id
+            )
+        );
+
+        // Map<String, Schema.SObjectType> tokens = Schema.getGlobalDescribe();
+        // for (string s:tokens.keySet()){
+        // 	system.debug(s);
+        // }
+    }
+    @IsTest
+    static void testSharingAccount() {
+        list<group> groups = [
+            SELECT id
+            FROM group
+            WHERE Name = 'the knights who say nee'
+        ];
+        list<Account> lstAccounts = [SELECT id FROM Account];
+
+        list<user> users = createUsers(2);
+
+        list<GroupMember> gms = new List<GroupMember>();
+        gms.add(
+            new GroupMember(GroupId = groups[0].id, UserOrGroupId = users[0].id)
+        );
+        gms.add(
+            new GroupMember(GroupId = groups[0].id, UserOrGroupId = users[1].id)
+        );
+
+        insert gms;
+        UserRole r = [
+            SELECT Id
+            FROM UserRole
+            WHERE DeveloperName = 'MyCustomRole'
+        ];
+        test.startTest();
+        System.runAs(createAdmin()) {
+            try {
+                LightningSharing.upsertPerm(
+                    groups[0].id,
+                    lstAccounts[0].id,
+                    'Read'
+                );
+                lightningSharing.upsertPerm(r.id, lstAccounts[0].id, 'Read');
+
+                LightningSharing.getSharings(lstAccounts[0].id);
+
+                LightningSharing.deletePerm(groups[0].id, lstAccounts[0].id);
+                LightningSharing.deletePerm(r.id, lstAccounts[0].id);
+            } catch (Exception e) {
+                System.assertNotEquals(null, e);
+            }
+        }
+        test.stopTest();
+    }
+    @IsTest
+    static void testNegativegetSharingDescribe() {
+        try {
+            LightningSharing.getSharingDescribe(null);
+        } catch (Exception e) {
+            system.assertNotEquals(null, e);
+        }
+    }
+
+    @testSetup
+    static void makeData() {
+        //make some object for testing, like a lead
+        lead l = new lead();
+        l.Lastname = 'McLaughlin';
+        l.company = 'Salesforce';
+        l.email = 'm.shane.mclaughlin@gmail.com';
+        insert l;
+
+        account a = new account();
+        a.Name = 'Ink, inc.';
+        insert a;
+
+        contact c = new contact();
+        c.accountId = a.id;
+        c.FirstName = 'Sarah';
+        c.LastName = 'McLaughlin';
+        c.Email = 'sarah@gmail.com';
+        insert c;
+
+        Opportunity o = new Opportunity();
+        o.accountId = a.id;
+        o.closeDate = system.today();
+        o.Name = 'biggest deal ever';
+
+        o.StageName = [
+            SELECT MasterLabel
+            FROM OpportunityStage
+            WHERE IsClosed = FALSE
+        ][0]
+        .MasterLabel;
+        insert o;
+
+        PrivateTestObject__c pto = new PrivateTestObject__c();
+        insert pto;
+
+        ReadOnlyTestObject__c roto = new ReadOnlyTestObject__c();
+        insert roto;
+
+        group g = new group();
+        g.Name = 'the knights who say nee';
+        g.Type = 'Regular';
+
+        insert g;
+        // Create a role
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            UserRole r = new UserRole(
+                DeveloperName = 'MyCustomRole',
+                Name = 'My Role'
+            );
+            insert r;
+        }
+    }
+
+    public static user createAdmin() {
+        Profile p = [
+            SELECT Id
+            FROM Profile
+            WHERE Name = 'System Administrator'
+        ];
+
+        // create User
+        User u = new User();
+
+        u.FirstName = 'A';
+        u.LastName = 'S';
+        u.Email = 'test@testLightningSharing2017.com';
+        u.Username = 'astest@testLightningSharing2017.com';
+        u.Alias = 'astest';
+        u.ProfileId = p.Id;
+        u.TimeZoneSidKey = 'America/Denver';
+        u.LocaleSidKey = 'en_US';
+        u.EmailEncodingKey = 'UTF-8';
+        u.LanguageLocaleKey = 'en_US';
+
+        insert u;
+        system.debug('u contains ' + u);
+        return u;
+    }
+
+    public static list<user> createUsers(integer numberOfUsers) {
+        list<user> users = new List<user>();
+
+        Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User'];
+
+        for (integer i = 0; i < numberOfUsers; i++) {
+            string x = string.valueOf(i);
+            User u = new User(
+                Alias = 't' + x,
+                Email = 'standarduser' + x + '@testLightningSharing2017.msm',
+                EmailEncodingKey = 'UTF-8',
+                LastName = 'Testing' + x,
+                LanguageLocaleKey = 'en_US',
+                LocaleSidKey = 'en_US',
+                ProfileId = p.Id,
+                TimeZoneSidKey = 'America/Los_Angeles',
+                UserName = 'standarduser' + x + '@testLightningSharing2017.msm'
+            );
+            users.add(u);
+        }
+
+        insert users;
+        return users;
+    }
 }

@@ -9,41 +9,40 @@ import { getRecordUi } from 'lightning/uiRecordApi';
 const mockGetRecordUI = require('./data/privateTestObjectRecordUI.json');
 
 describe('loads outer component with data', () => {
+    it('loads and has action buttons', () => {
+        // const getRecordUIWireAdapter = registerLdsTestWireAdapter(getRecordUi);
+        const element = createElement('c-lightning-sharing-wrapper', {
+            is: lightningSharingWrapper
+        });
+        document.body.appendChild(element);
 
-  it('loads and has action buttons', () => {
-    // const getRecordUIWireAdapter = registerLdsTestWireAdapter(getRecordUi);
-    const element = createElement('ltngsharing-lightning-sharing-wrapper', {
-      is: lightningSharingWrapper
+        // there should be action buttons
+        const buttonGroup = element.shadowRoot.querySelector(
+            'lightning-button-group'
+        );
+        expect(buttonGroup).toBeTruthy();
+
+        const buttons = element.shadowRoot.querySelectorAll('lightning-button');
+        expect(buttons).toHaveLength(2);
     });
-    document.body.appendChild(element);
 
-    // there should be action buttons
-    const buttonGroup = element.shadowRoot.querySelector(
-      'lightning-button-group'
-    );
-    expect(buttonGroup).toBeTruthy();
+    // it('loads a record from recordUi', async () => {
+    //   const element = createElement('c-lightning-sharing-wrapper', {
+    //     is: lightningSharingWrapper
+    //   });
+    //   document.body.appendChild(element);
 
-    const buttons = element.shadowRoot.querySelectorAll('lightning-button');
-    expect(buttons).toHaveLength(2);
-  });
+    //   await getRecordUIWireAdapter.emit(mockGetRecordUI);
 
-  // it('loads a record from recordUi', async () => {
-  //   const element = createElement('c-lightning-sharing-wrapper', {
-  //     is: lightningSharingWrapper
-  //   });
-  //   document.body.appendChild(element);
+    //   const card = element.shadowRoot.querySelector('lightning-card');
+    //   expect(card.title).toBe('PrivateTestObject__c: 0');
+    // });
 
-  //   await getRecordUIWireAdapter.emit(mockGetRecordUI);
+    // it('loads the child components', () => {});
 
-  //   const card = element.shadowRoot.querySelector('lightning-card');
-  //   expect(card.title).toBe('PrivateTestObject__c: 0');
-  // });
-
-  // it('loads the child components', () => {});
-
-  afterEach(() => {
-    while (document.body.firstChild) {
-      document.body.removeChild(document.body.firstChild);
-    }
-  });
+    afterEach(() => {
+        while (document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        }
+    });
 });

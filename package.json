@@ -5,7 +5,9 @@
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {
-    "@salesforce/lwc-jest": "^0.4.10"
+    "@salesforce/lwc-jest": "^0.4.10",
+    "prettier": "2.1.2",
+    "prettier-plugin-apex": "1.7.0"
   },
   "scripts": {
     "build": "sfdx shane:org:delete; ./orgInit.sh",

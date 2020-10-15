@@ -2,20 +2,20 @@
     "records": [
         {
             "attributes": {
-                "type": "ltngsharing__ReadOnlyTestObject__c",
-                "referenceId": "ltngsharing__ReadOnlyTestObject__cRef1"
+                "type": "ReadOnlyTestObject__c",
+                "referenceId": "ReadOnlyTestObject__cRef1"
             }
         },
         {
             "attributes": {
-                "type": "ltngsharing__ReadOnlyTestObject__c",
-                "referenceId": "ltngsharing__ReadOnlyTestObject__cRef2"
+                "type": "ReadOnlyTestObject__c",
+                "referenceId": "ReadOnlyTestObject__cRef2"
             }
         },
         {
             "attributes": {
-                "type": "ltngsharing__ReadOnlyTestObject__c",
-                "referenceId": "ltngsharing__ReadOnlyTestObject__cRef3"
+                "type": "ReadOnlyTestObject__c",
+                "referenceId": "ReadOnlyTestObject__cRef3"
             }
         }
     ]

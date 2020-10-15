@@ -5,3 +5,13 @@ yarn-error.log
 src
 
 .localdevserver
+
+# Salesforce cache
+.sfdx/
+.localdevserver/
+
+# LWC VSCode autocomplete
+**/lwc/jsconfig.json
+
+# Dependency directories
+node_modules/

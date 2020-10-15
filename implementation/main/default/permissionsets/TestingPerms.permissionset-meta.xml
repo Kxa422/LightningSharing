@@ -9,11 +9,11 @@
         <visible>false</visible>
     </applicationVisibilities>
     <classAccesses>
-        <apexClass>ltngsharing__LightningSharing</apexClass>
+        <apexClass>LightningSharing</apexClass>
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
-        <apexClass>ltngsharing__TestLightningSharing</apexClass>
+        <apexClass>TestLightningSharing</apexClass>
         <enabled>false</enabled>
     </classAccesses>
     <hasActivationRequired>false</hasActivationRequired>
@@ -24,7 +24,7 @@
         <allowEdit>true</allowEdit>
         <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
-        <object>ltngsharing__PrivateTestObject__c</object>
+        <object>PrivateTestObject__c</object>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
     <objectPermissions>
@@ -33,15 +33,15 @@
         <allowEdit>true</allowEdit>
         <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
-        <object>ltngsharing__ReadOnlyTestObject__c</object>
+        <object>ReadOnlyTestObject__c</object>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
     <tabSettings>
-        <tab>ltngsharing__PrivateTestObject__c</tab>
+        <tab>PrivateTestObject__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
-        <tab>ltngsharing__ReadOnlyTestObject__c</tab>
+        <tab>ReadOnlyTestObject__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
