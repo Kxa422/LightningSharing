@@ -9,7 +9,7 @@ src
 # Salesforce cache
 .sfdx/
 .localdevserver/
-
+tests/
 # LWC VSCode autocomplete
 **/lwc/jsconfig.json
 
