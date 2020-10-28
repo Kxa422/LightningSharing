@@ -37,8 +37,9 @@ export default class LightningSharingWrapper extends NavigationMixin(
             const namedFieldValue =
                 data.records[this.recordId].fields[nameField];
 
-            this.cardTitle = `${objLabel} : ${namedFieldValue.displayValue ||
-                namedFieldValue.value}`;
+            this.cardTitle = `${objLabel} : ${
+                namedFieldValue.displayValue || namedFieldValue.value
+            }`;
         }
     }
 
@@ -53,7 +54,9 @@ export default class LightningSharingWrapper extends NavigationMixin(
     }
 
     refreshExisting() {
-        const existing = this.template.querySelector('c-existing-shares');
+        const existing = this.template.querySelector(
+            'c-lightning-sharing-tabs'
+        );
         if (existing) {
             existing.refresh();
         }

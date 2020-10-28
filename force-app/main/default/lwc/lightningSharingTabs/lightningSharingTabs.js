@@ -10,4 +10,11 @@ export default class LightningSharingWrapper extends LightningElement {
         ViewCurrentPermissions,
         AddNewPermission
     };
+
+    @api refresh() {
+        const existing = this.template.querySelector('c-existing-shares');
+        if (existing) {
+            existing.refresh();
+        }
+    }
 }
