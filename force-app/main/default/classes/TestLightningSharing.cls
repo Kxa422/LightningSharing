@@ -10,17 +10,17 @@ private class TestLightningSharing {
         string uq = LightningSharing.getReturning('User');
         system.assertEquals(
             uq,
-            'User(Id, Name, UserType WHERE UserType in (\'Standard\', \'PowerCustomerSuccess\', \'PowerPartner\'))'
+            'User(Id, Name, UserType, UserRole.Name WHERE isActive = true and UserType in (\'Standard\', \'PowerCustomerSuccess\', \'PowerPartner\') ORDER BY Name)'
         );
 
         uq = LightningSharing.getReturning('Group');
-        system.assertEquals(uq, 'Group(Id, Name, Type)');
+        system.assertEquals(uq, 'Group(Id, Name, Type ORDER BY Name)');
 
         uq = LightningSharing.getReturning('Custom__c');
-        system.assertEquals(uq, 'Custom__c(Id, Name)');
+        system.assertEquals(uq, 'Custom__c(Id, Name ORDER BY Name)');
 
         uq = LightningSharing.getReturning('Lead');
-        system.assertEquals(uq, 'Lead(Id, Name)');
+        system.assertEquals(uq, 'Lead(Id, Name ORDER BY Name)');
     }
 
     @isTest

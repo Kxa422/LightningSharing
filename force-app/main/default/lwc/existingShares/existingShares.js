@@ -17,7 +17,9 @@ export default class ExistingShares extends NavigationMixin(LightningElement) {
   @api recordId;
   @track tableData = [];
   source = 'ExistingShares';
-
+  defaultSortDirection = "asc";
+  sortDirection = "asc";
+  sortedBy;
   // call this when you know the sharing table is out of sync
   @api refresh() {
     logger(this.log, this.source, 'refreshing');
@@ -29,8 +31,8 @@ export default class ExistingShares extends NavigationMixin(LightningElement) {
   constructor() {
     super();
     this.columns = [
-      { label: 'User or Group', fieldName: 'UserOrGroupType' },
-      { label: 'Type', fieldName: 'SubType' },
+      { label: 'User or Group', fieldName: 'UserOrGroupType', sortable: true },
+      { label: 'Type', fieldName: 'SubType', sortable: true },
       {
         label: 'Name',
         type: 'button',
@@ -40,10 +42,12 @@ export default class ExistingShares extends NavigationMixin(LightningElement) {
           },
           name: 'view',
           variant: 'base'
-        }
+        },
+        fieldName: "UserOrGroupName",
+        sortable: true
       },
-      { label: 'Reason', fieldName: 'RowCause' },
-      { label: 'Access Level', fieldName: 'AccessLevel' }
+      { label: 'Reason', fieldName: 'RowCause', sortable: true },
+      { label: 'Access Level', fieldName: 'AccessLevel', sortable: true }
     ].concat(sharingButtonColumns);
   }
 
@@ -136,4 +140,31 @@ export default class ExistingShares extends NavigationMixin(LightningElement) {
       });
     }
   }
+  // Sort columns
+  sortBy(field, reverse, primer) {
+    const key = primer
+      ? function (x) {
+          return primer(x[field]);
+        }
+      : function (x) {
+          return x[field];
+        };
+
+    return function (a, b) {
+      a = key(a);
+      b = key(b);
+      return reverse * ((a > b) - (b > a));
+    };
+  }
+
+  onHandleSort(event) {
+    const { fieldName: sortedBy, sortDirection } = event.detail;
+
+    const cloneData = [...this.tableData];
+
+    cloneData.sort(this.sortBy(sortedBy, sortDirection === "asc" ? 1 : -1));
+    this.tableData = cloneData;
+    this.sortDirection = sortDirection;
+    this.sortedBy = sortedBy;
+  }  
 }

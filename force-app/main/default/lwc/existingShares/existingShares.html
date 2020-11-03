@@ -1,5 +1,15 @@
 <template>
     <template if:true={wiredSharings}>
-      <lightning-datatable data={tableData} columns={columns} key-field="UserOrGroupId" hide-checkbox-column="true" onrowaction={handleRowAction}></lightning-datatable>
+        <lightning-datatable
+            data={tableData}
+            columns={columns}
+            key-field="UserOrGroupId"
+            hide-checkbox-column="true"
+            onrowaction={handleRowAction}
+            default-sort-direction={defaultSortDirection}
+            sorted-direction={sortDirection}
+            sorted-by={sortedBy}
+            onsort={onHandleSort}
+        ></lightning-datatable>
     </template>
 </template>

@@ -244,12 +244,12 @@ global without sharing class LightningSharing {
 
         //filter out user types that don't have sharing!
         if (objectType == 'User') {
-            return 'User(Id, Name, UserType WHERE UserType in (\'Standard\', \'PowerCustomerSuccess\', \'PowerPartner\'))';
+            return 'User(Id, Name, UserType, UserRole.Name WHERE isActive = true and UserType in (\'Standard\', \'PowerCustomerSuccess\', \'PowerPartner\') ORDER BY Name)';
         }
         if (objectType == 'Group') {
-            return objectType + '(Id, Name, Type)';
+            return objectType + '(Id, Name, Type ORDER BY Name)';
         } else {
-            return objectType + '(Id, Name)';
+            return objectType + '(Id, Name ORDER BY Name)';
         }
     }
 

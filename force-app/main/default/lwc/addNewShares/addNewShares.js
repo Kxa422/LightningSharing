@@ -34,6 +34,9 @@ export default class AddNewShares extends LightningElement {
   };
   @track searchString = '';
   source = 'addNewShares';
+  defaultSortDirection = "asc";
+  sortDirection = "asc";
+  sortedBy;
 
   get tooManyResults() {
     return this.searchResults.length > 199;
@@ -55,7 +58,16 @@ export default class AddNewShares extends LightningElement {
 
   selectedType = 'user';
 
-  columns = [{ label: 'Name', fieldName: 'Name' }].concat(sharingButtonColumns);
+  columns = [
+    { label: "Name", fieldName: "Name", sortable: true },
+    { label: "Type", fieldName: "UserType", sortable: true },
+    {
+      api: "UserRole.Name",
+      label: "Role",
+      fieldName: "UserRoleName",
+      sortable: true
+    }
+  ].concat(sharingButtonColumns);
 
   @track searchResults = [];
   @track searchDisabled = false;
@@ -79,7 +91,27 @@ export default class AddNewShares extends LightningElement {
     logger(this.log, this.source, `type is now ${this.selectedType}`);
     // clear the results
     this.searchResults = [];
-    // TODO: how clear the search box
+    if (this.selectedType === "user") {
+      this.columns = [
+        { label: "Name", fieldName: "Name", sortable: true },
+        { label: "Type", fieldName: "UserType", sortable: true },
+        {
+          api: "UserRole.Name",
+          label: "Role",
+          fieldName: "UserRoleName",
+          sortable: true
+        }
+      ].concat(sharingButtonColumns);
+    } else if (this.selectedType === "group") {
+      this.columns = [
+        { label: "Name", fieldName: "Name", sortable: true },
+        { label: "Type", fieldName: "Type", sortable: true }
+      ].concat(sharingButtonColumns);
+    } else {
+      this.columns = [
+        { label: "Name", fieldName: "Name", sortable: true }
+      ].concat(sharingButtonColumns);
+    }
   }
 
   async actuallySearch() {
@@ -96,14 +128,13 @@ export default class AddNewShares extends LightningElement {
     logger(this.log, this.source, 'search results', results);
     const finalResults = [];
 
-    results.forEach(result => {
+    results.forEach((result) => {
       // make some types a bit nicer
-      if (this.selectedType === 'user') {
-        result.Name = `${result.Name} (${this.translateTypes(
-          result.UserType
-        )})`;
-      } else if (this.selectedType === 'group') {
-        result.Name = `${result.Name} (${this.translateTypes(result.Type)})`;
+      if (this.selectedType === "user") {
+        result.UserType = `${this.translateTypes(result.UserType)}`;
+        result.UserRoleName = result.UserRole ? result.UserRole.Name : "";
+      } else if (this.selectedType === "group") {
+        result.Type = `${this.translateTypes(result.Type)}`;
       }
       finalResults.push(result);
     });
@@ -203,4 +234,32 @@ export default class AddNewShares extends LightningElement {
       })
     );
   }
+
+  // Sort columns
+  sortBy(field, reverse, primer) {
+    const key = primer
+      ? function (x) {
+          return primer(x[field]);
+        }
+      : function (x) {
+          return x[field];
+        };
+
+    return function (a, b) {
+      a = key(a);
+      b = key(b);
+      return reverse * ((a > b) - (b > a));
+    };
+  }
+
+  onHandleSort(event) {
+    const { fieldName: sortedBy, sortDirection } = event.detail;
+
+    const cloneData = [...this.searchResults];
+
+    cloneData.sort(this.sortBy(sortedBy, sortDirection === "asc" ? 1 : -1));
+    this.searchResults = cloneData;
+    this.sortDirection = sortDirection;
+    this.sortedBy = sortedBy;
+  }  
 }
