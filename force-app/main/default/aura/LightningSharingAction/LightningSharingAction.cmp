@@ -1,7 +1,9 @@
-<aura:component implements="force:lightningQuickActionWithoutHeader,force:hasRecordId" access="global">
+<aura:component
+    implements="force:lightningQuickActionWithoutHeader,force:hasRecordId"
+    access="global"
+>
+    <aura:handler name="render" value="{!this}" action="{!c.doInit}" />
 
-  <aura:handler name="render" value="{!this}" action="{!c.doInit}" />
-
-  <lightning:navigation aura:id="navService" />
-
+    <lightning:navigation aura:id="navService" />
+    <lightning:overlayLibrary aura:id="modalService" />
 </aura:component>

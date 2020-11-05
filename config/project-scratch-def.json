@@ -1,5 +1,7 @@
 {
+    "orgName": "LightningSharing",
     "edition": "Developer",
+    "description": "Scratchorg for lightning sharing",
     "hasSampleData": true,
     "features": ["Communities", "Sites", "SiteDotCom"],
     "settings": {
@@ -15,5 +17,19 @@
         "experienceBundleSettings": {
             "enableExperienceBundleMetadata": true
         }
-    }
+    },
+    "objectSettings": {
+        "opportunity": {
+            "sharingModel": "private"
+        },
+        "account": {
+            "sharingModel": "private"
+        },
+        "case": {
+            "sharingModel": "private"
+        },
+        "contact": {
+            "sharingModel": "private"
+        }
+    }    
 }
