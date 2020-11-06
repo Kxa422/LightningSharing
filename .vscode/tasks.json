@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "SFDX: Run Security Scan on Current File",
+            "type": "shell",
+            "command": "sfdx",
+            "args": [
+                "scanner:run",
+                "-t",
+                "${relativeFile}",
+                "-c",
+                "Security"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

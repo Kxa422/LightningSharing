@@ -57,6 +57,7 @@ private class TestLightningSharing {
         try {
             LightningSharing.getSharings(l[0].id);
         } catch (AuraHandledException ahe) {
+            system.assertNotEquals(null, ahe);
         }
 
         list<Opportunity> o = [SELECT id FROM Opportunity];
@@ -64,6 +65,7 @@ private class TestLightningSharing {
         try {
             LightningSharing.getSharings(l[0].id);
         } catch (AuraHandledException ahe) {
+            system.assertNotEquals(null, ahe);
         }
 
         list<PrivateTestObject__c> ptos = [SELECT id FROM PrivateTestObject__c];
@@ -124,7 +126,46 @@ private class TestLightningSharing {
 
         LightningSharing.deletePerm(u.id, ptos[0].id);
     }
+    @isTest
+    static void testDeleteReadOnly() {
+        //list<lead> l = [select id from Lead];
+        list<PrivateTestObject__c> ptos = [SELECT Id FROM PrivateTestObject__c];
+        list<lead> l = [SELECT id FROM lead];
+        list<Contact> c = [SELECT id FROM Contact];
 
+        user u = createReadOnlyUser();
+        System.runAs(u) {
+            try {
+                LightningSharing.upsertPerm(u.id, ptos[0].id, 'Edit');
+            } catch (Exception e) {
+                system.assertNotEquals(null, e);
+            }
+
+            try {
+                LightningSharing.upsertPerm(u.id, c[0].id, 'Edit');
+            } catch (Exception e) {
+                system.assertNotEquals(null, e);
+            }
+
+            try {
+                LightningSharing.deletePerm(u.id, ptos[0].id);
+            } catch (Exception e) {
+                system.assertNotEquals(null, e);
+            }
+
+            try {
+                LightningSharing.doSOSL('McLaughlin', 'Lead');
+            } catch (Exception e) {
+                system.assertNotEquals(null, e);
+            }
+
+            try {
+                LightningSharing.buildQuery(l[0].id);
+            } catch (Exception e) {
+                system.assertNotEquals(null, e);
+            }
+        }
+    }
     @isTest
     static void testUpsertPerm() {
         list<Opportunity> o = [SELECT id FROM Opportunity];
@@ -155,6 +196,7 @@ private class TestLightningSharing {
         } catch (exception e) {
             //ok, sharing may not be on
             system.debug(e);
+            system.assertNotEquals(null, e);
         }
 
         try {
@@ -162,6 +204,7 @@ private class TestLightningSharing {
             LightningSharing.deletePerm(u.id, o[0].id);
         } catch (exception e) {
             system.debug(e);
+            system.assertNotEquals(null, e);
             //ok, sharing may not be on
         }
 
@@ -171,6 +214,7 @@ private class TestLightningSharing {
         } catch (exception e) {
             //ok, sharing may not be on
             system.debug(e);
+            system.assertNotEquals(null, e);
         }
 
         try {
@@ -179,6 +223,7 @@ private class TestLightningSharing {
         } catch (exception e) {
             system.debug(e);
             //ok, sharing may not be on
+            system.assertNotEquals(null, e);
         }
     }
 
@@ -281,6 +326,7 @@ private class TestLightningSharing {
             try {
                 LightningSharing.getSharings(l[0].id);
             } catch (AuraHandledException ahe) {
+                system.assertNotEquals(null, ahe);
             }
             LightningSharing.getSharings(ptos[0].id);
             LightningSharing.getSharings(rotos[0].id);
@@ -439,12 +485,12 @@ private class TestLightningSharing {
 
         u.FirstName = 'A';
         u.LastName = 'S';
-        u.Email = 'test@testLightningSharing2017.com';
-        u.Username = 'astest@testLightningSharing2017.com';
+        u.Email = 'test@testLightningSharing2020.com';
+        u.Username = 'astest@testLightningSharing2020.com';
         u.Alias = 'astest';
         u.ProfileId = p.Id;
-        u.TimeZoneSidKey = 'America/Denver';
-        u.LocaleSidKey = 'en_US';
+        u.TimeZoneSidKey = 'Europe/London';
+        u.LocaleSidKey = 'en_GB';
         u.EmailEncodingKey = 'UTF-8';
         u.LanguageLocaleKey = 'en_US';
 
@@ -462,19 +508,36 @@ private class TestLightningSharing {
             string x = string.valueOf(i);
             User u = new User(
                 Alias = 't' + x,
-                Email = 'standarduser' + x + '@testLightningSharing2017.msm',
+                Email = 'standarduser' + x + '@testLightningSharing2020.com',
                 EmailEncodingKey = 'UTF-8',
                 LastName = 'Testing' + x,
                 LanguageLocaleKey = 'en_US',
-                LocaleSidKey = 'en_US',
+                LocaleSidKey = 'en_GB',
                 ProfileId = p.Id,
-                TimeZoneSidKey = 'America/Los_Angeles',
-                UserName = 'standarduser' + x + '@testLightningSharing2017.msm'
+                TimeZoneSidKey = 'Europe/London',
+                UserName = 'standarduser' + x + '@testLightningSharing2020.com'
             );
             users.add(u);
         }
 
         insert users;
         return users;
+    }
+    public static User createReadOnlyUser() {
+        Profile p = [SELECT Id FROM Profile WHERE Name = 'Read Only'];
+        User u = new User(
+            Alias = 'r',
+            Email = 'readonly@testLightningSharing2020.com',
+            EmailEncodingKey = 'UTF-8',
+            LastName = 'ReadOnly',
+            LanguageLocaleKey = 'en_US',
+            LocaleSidKey = 'en_GB',
+            ProfileId = p.Id,
+            TimeZoneSidKey = 'Europe/London',
+            UserName = 'readonly@testLightningSharing2020.com'
+        );
+        insert u;
+        system.debug('u contains ' + u);
+        return u;
     }
 }
