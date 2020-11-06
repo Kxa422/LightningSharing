@@ -32,7 +32,15 @@ jobs:
               run: |
                   openssl enc -nosalt -aes-256-cbc -d -in asset/server.key.enc -out asset/server.key -base64 -K $DECRYPTION_KEY -iv $DECRYPTION_IV
                   sfdx force:auth:jwt:grant --clientid $CLIENTID --jwtkeyfile asset/server.key --username $CLIENTUSER --setalias HubOrg --setdefaultdevhubusername
-
+                  sfdx force:org:create -a TestOrg -f config/project-scratch-def.json -s
+                  sfdx force:source:push -f
+                  sfdx force:user:permset:assign -n TestingPerms
+                  sfdx force:data:tree:import -f data/PrivateTestObject__c.json
+                  sfdx force:data:tree:import -f data/ReadOnlyTestObject__c.json
+                  sfdx force:user:create generatepassword=true FirstName=Test LastName=Privilege permsets=TestingPerms profileName="Standard User"
+                  sfdx force:data:tree:import -f data/ReadOnlyTestObject__c.json
+                  sfdx force:apex:test:run --targetusername TestOrg --codecoverage --resultformat junit --outputdir tests/Salesforce -l=RunLocalTests --wait 60
+                  sfdx force:org:delete --noprompt --targetusername TestOrg
               env:
                   CLIENTID: ${{ secrets.CLIENTID }}
                   CLIENTUSER: ${{ secrets.CLIENTUSER }}
@@ -43,3 +51,134 @@ jobs:
               with:
                   name: TestResult
                   path: tests/Salesforce
+    Slack:
+        name: Create Slack message
+        runs-on: ubuntu-latest
+        needs: sfdx
+        steps:
+            - name: Download file result for sfdx
+              uses: actions/download-artifact@v1
+              with:
+                  name: TestResult
+            - name: Slack message
+              run: |
+                  pwd
+                  ls -altr
+                  ls -altr TestResult
+                  export UNIT_TESTS_RUN_ID=$(cat TestResult//test-run-id.txt)
+                  echo $UNIT_TESTS_RUN_ID
+                  export UNIT_TESTS_FINAL_VALUE=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.orgWideCoverage' -r | sed 's/%//')
+                  export UNIT_TESTS_FINAL_STATUS=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.outcome' -r)
+                  export UNIT_TESTS_RAN=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.testsRan' -r)
+                  export UNIT_TESTS_USER=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.username' -r)
+                  export UNIT_TESTS_PASSING=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.passing' -r)
+                  export UNIT_TESTS_FAILING=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.failing' -r)
+                  export UNIT_TESTS_SKIPPED=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.skipped' -r)
+                  export UNIT_TESTS_COLOR=#36a64f
+                  export SLACK_MESSAGE="All "
+                  if [ "$UNIT_TESTS_FINAL_STATUS" == "Failed" ]; then SLACK_MESSAGE=$UNIT_TESTS_FAILING ;  fi
+                  if [ "$UNIT_TESTS_FINAL_VALUE" -lt 85 ]; then UNIT_TESTS_COLOR=#DFB317;  fi
+                  if [ "$UNIT_TESTS_FINAL_VALUE" -lt 75 ]; then UNIT_TESTS_COLOR=#FF0000;  fi
+                  if [ "$UNIT_TESTS_FINAL_STATUS" == "Failed" ]; then UNIT_TESTS_COLOR=#FF0000;  fi
+                  echo $UNIT_TESTS_FINAL_STATUS
+                  echo $UNIT_TESTS_FINAL_VALUE
+                  echo $UNIT_TESTS_COLOR
+                  export GIT_BRANCH=${GITHUB_REF##*/}
+                  echo $GITHUB_REF
+                  echo $GIT_BRANCH
+                  curl -X POST --data-urlencode "payload={\"username\":\"Test Ghost\",\"icon_emoji\":\":ghost:\",\"attachments\":[{\"color\":\"$UNIT_TESTS_COLOR\",\"text\":\"$SLACK_MESSAGE tests $UNIT_TESTS_FINAL_STATUS for $UNIT_TESTS_USER in $GIT_BRANCH for repo $GITHUB_REPOSITORY\",\"fields\":[{\"title\":\"Test ran\",\"value\":\"$UNIT_TESTS_RAN\",\"short\":true},{\"title\":\"Test passing\",\"value\":\"$UNIT_TESTS_PASSING\",\"short\":true},{\"title\":\"Test failing\",\"value\":\"$UNIT_TESTS_FAILING\",\"short\":true},{\"title\":\"Test skipped\",\"value\":\"$UNIT_TESTS_SKIPPED\",\"short\":true},{\"title\":\"Code coverage\",\"value\":\"$UNIT_TESTS_FINAL_VALUE%\",\"short\":true}]}]}" https://hooks.slack.com/services/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
+    badge:
+        name: Create result badge
+        runs-on: ubuntu-latest
+        needs: sfdx
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  ref: master
+            - name: Download math result for sfdx
+              uses: actions/download-artifact@v1
+              with:
+                  name: TestResult
+            - name: Create result picture
+              run: |
+                  export GIT_BRANCH=${GITHUB_REF##*/}
+                  echo $GITHUB_REF
+                  echo $GIT_BRANCH
+                  pwd
+                  ls -altr
+                  ls -altr TestResult
+                  export UNIT_TESTS_RUN_ID=$(cat TestResult/test-run-id.txt)
+                  echo $UNIT_TESTS_RUN_ID
+                  export UNIT_TESTS_FINAL_VALUE=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.orgWideCoverage' -r | sed 's/%//')
+                  export UNIT_TESTS_FINAL_STATUS=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.outcome' -r)
+                  export UNIT_TESTS_RAN=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.testsRan' -r)
+                  export UNIT_TESTS_USER=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.username' -r)
+                  export UNIT_TESTS_PASSING=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.passing' -r)
+                  export UNIT_TESTS_FAILING=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.failing' -r)
+                  export UNIT_TESTS_SKIPPED=$(cat "TestResult/test-result-$UNIT_TESTS_RUN_ID.json" | jq '.summary.skipped' -r)
+                  export UNIT_TESTS_COLOR=#4c1
+                  export SLACK_MESSAGE="All "
+                  if [ "$UNIT_TESTS_FINAL_STATUS" == "Failed" ]; then SLACK_MESSAGE=$UNIT_TESTS_FAILING ;  fi
+                  if [ "$UNIT_TESTS_FINAL_VALUE" -lt 85 ]; then UNIT_TESTS_COLOR=#DFB317;  fi
+                  if [ "$UNIT_TESTS_FINAL_VALUE" -lt 75 ]; then UNIT_TESTS_COLOR=#FF0000;  fi
+                  if [ "$UNIT_TESTS_FINAL_STATUS" == "Failed" ]; then UNIT_TESTS_COLOR=#FF0000;  fi
+                  echo '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="104" height="20">' > Status.svg
+                  echo '	<linearGradient id="b" x2="0" y2="100%">' >> Status.svg
+                  echo '		<stop offset="0" stop-color="#bbb" stop-opacity=".1"/>' >> Status.svg
+                  echo '		<stop offset="1" stop-opacity=".1"/>' >> Status.svg
+                  echo '	</linearGradient>' >> Status.svg
+                  echo '	<clipPath id="a">' >> Status.svg
+                  echo '		<rect width="104" height="20" rx="3" fill="#fff"/>' >> Status.svg
+                  echo '	</clipPath>' >> Status.svg
+                  echo '	<g clip-path="url(#a)">' >> Status.svg
+                  echo '		<path fill="#555" d="M0 0h61v20H0z"/>' >> Status.svg
+                  echo "		<path fill=\"$UNIT_TESTS_COLOR\" d=\"M61 0h43v20H61z\"/>" >> Status.svg
+                  echo '		<path fill="url(#b)" d="M0 0h104v20H0z"/>' >> Status.svg
+                  echo '	</g>' >> Status.svg
+                  echo '	<g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> ' >> Status.svg
+                  echo '		<text x="315" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="510">coverage</text>' >> Status.svg
+                  echo '		<text x="315" y="140" transform="scale(.1)" textLength="510">coverage</text>' >> Status.svg
+                  echo "		<text x=\"815\" y=\"150\" fill=\"#010101\" fill-opacity=\".3\" transform=\"scale(.1)\" textLength=\"250\">$UNIT_TESTS_FINAL_VALUE%</text>" >> Status.svg
+                  echo "		<text x=\"815\" y=\"140\" transform=\"scale(.1)\" textLength=\"250\">$UNIT_TESTS_FINAL_VALUE%</text>" >> Status.svg
+                  echo '	</g>' >> Status.svg
+                  echo '</svg>' >> Status.svg
+                  echo "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"212\" height=\"20\">" > Tests.svg
+                  echo "	<linearGradient id=\"b\" x2=\"0\" y2=\"100%\"><stop offset=\"0\" stop-color=\"#bbb\" stop-opacity=\".1\"/>" >> Tests.svg
+                  echo "		<stop offset=\"1\" stop-opacity=\".1\"/>" >> Tests.svg
+                  echo "	</linearGradient>" >> Tests.svg
+                  echo "	<clipPath id=\"a\">" >> Tests.svg
+                  echo "		<rect width=\"212\" height=\"20\" rx=\"3\" fill=\"#fff\"/>" >> Tests.svg
+                  echo "	</clipPath>" >> Tests.svg
+                  echo "	<g clip-path=\"url(#a)\">" >> Tests.svg
+                  echo "		<path fill=\"#555\" d=\"M0 0h37v20H0z\"/>" >> Tests.svg
+                  echo "		<path fill=\"$UNIT_TESTS_COLOR\" d=\"M37 0h175v20H37z\"/>" >> Tests.svg
+                  echo "		<path fill=\"url(#b)\" d=\"M0 0h212v20H0z\"/>" >> Tests.svg
+                  echo "	</g>" >> Tests.svg
+                  echo "	<g fill=\"#fff\" text-anchor=\"middle\" font-family=\"DejaVu Sans,Verdana,Geneva,sans-serif\" font-size=\"110\"> " >> Tests.svg
+                  echo "		<text x=\"195\" y=\"150\" fill=\"#010101\" fill-opacity=\".3\" transform=\"scale(.1)\" textLength=\"270\">tests</text>" >> Tests.svg
+                  echo "		<text x=\"195\" y=\"140\" transform=\"scale(.1)\" textLength=\"270\">tests</text>" >> Tests.svg
+                  echo "		<text x=\"1235\" y=\"150\" fill=\"#010101\" fill-opacity=\".3\" transform=\"scale(.1)\" textLength=\"1650\">$UNIT_TESTS_PASSING passed, $UNIT_TESTS_FAILING failed, $UNIT_TESTS_SKIPPED skipped</text>" >> Tests.svg
+                  echo "		<text x=\"1235\" y=\"140\" transform=\"scale(.1)\" textLength=\"1650\">$UNIT_TESTS_PASSING passed, $UNIT_TESTS_FAILING failed, $UNIT_TESTS_SKIPPED skipped</text>" >> Tests.svg
+                  echo "	</g> " >> Tests.svg
+                  echo "</svg>" >> Tests.svg
+                  mkdir asset || true
+                  cp Tests.svg asset/Tests_$GIT_BRANCH.svg
+                  cp Status.svg asset/Status_$GIT_BRANCH.svg
+                  git add asset/Tests_$GIT_BRANCH.svg
+                  git add asset/Status_$GIT_BRANCH.svg
+                  git config --global user.name 'Test Bot'
+                  git config --global user.email $THE_USER
+                  git commit -m "Automated logo ci skip" || true
+                  git push || true
+              env:
+                  THE_USER: ${{ secrets.THE_USER }}
+            - name: Archive Status
+              uses: actions/upload-artifact@v1
+              with:
+                  name: Status
+                  path: Status.svg
+            - name: Archive Tests
+              uses: actions/upload-artifact@v1
+              with:
+                  name: Tests
+                  path: Tests.svg
