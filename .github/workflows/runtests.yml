@@ -1,0 +1,45 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on: push
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+    # This workflow contains a single job called "build"
+    sfdx:
+        # The type of runner that the job will run on
+        name: Install sfdx
+        runs-on: ubuntu-latest
+        if: "!contains(github.event.head_commit.message, 'ci skip')"
+        # Steps represent a sequence of tasks that will be executed as part of the job
+        steps:
+            # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+            - uses: actions/checkout@v2
+
+            # Runs a single command using the runners shell
+            - name: Install sfdx
+              run: |
+                  export CLIURL=https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
+                  mkdir sfdx
+                  wget -qO- $CLIURL | tar xJ -C sfdx --strip-components 1
+                  "./sfdx/install"
+                  sfdx --version
+            # Runs a set of commands using the runners shell
+            - name: Run tests DX
+              run: |
+                  openssl enc -nosalt -aes-256-cbc -d -in asset/server.key.enc -out asset/server.key -base64 -K $DECRYPTION_KEY -iv $DECRYPTION_IV
+                  sfdx force:auth:jwt:grant --clientid $CLIENTID --jwtkeyfile asset/server.key --username $CLIENTUSER --setalias HubOrg --setdefaultdevhubusername
+
+              env:
+                  CLIENTID: ${{ secrets.CLIENTID }}
+                  CLIENTUSER: ${{ secrets.CLIENTUSER }}
+                  DECRYPTION_KEY: ${{ secrets.DECRYPTION_KEY }}
+                  DECRYPTION_IV: ${{ secrets.DECRYPTION_IV }}
+            - name: Archive code coverage results
+              uses: actions/upload-artifact@v1
+              with:
+                  name: TestResult
+                  path: tests/Salesforce
