@@ -163,7 +163,7 @@ jobs:
                   echo "		<text x=\"1235\" y=\"140\" transform=\"scale(.1)\" textLength=\"1650\">$UNIT_TESTS_PASSING passed, $UNIT_TESTS_FAILING failed, $UNIT_TESTS_SKIPPED skipped</text>" >> Tests.svg
                   echo "	</g> " >> Tests.svg
                   echo "</svg>" >> Tests.svg
-                  mkdir asset
+                  ls -altr
                   cp Tests.svg asset/Tests_$GIT_BRANCH.svg
                   cp Status.svg asset/Status_$GIT_BRANCH.svg
                   git add asset/Tests_$GIT_BRANCH.svg
