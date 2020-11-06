@@ -86,7 +86,9 @@ jobs:
                   export GIT_BRANCH=${GITHUB_REF##*/}
                   echo $GITHUB_REF
                   echo $GIT_BRANCH
-                  curl -X POST --data-urlencode "payload={\"username\":\"Test Ghost\",\"icon_emoji\":\":ghost:\",\"attachments\":[{\"color\":\"$UNIT_TESTS_COLOR\",\"text\":\"$SLACK_MESSAGE tests $UNIT_TESTS_FINAL_STATUS for $UNIT_TESTS_USER in $GIT_BRANCH for repo $GITHUB_REPOSITORY\",\"fields\":[{\"title\":\"Test ran\",\"value\":\"$UNIT_TESTS_RAN\",\"short\":true},{\"title\":\"Test passing\",\"value\":\"$UNIT_TESTS_PASSING\",\"short\":true},{\"title\":\"Test failing\",\"value\":\"$UNIT_TESTS_FAILING\",\"short\":true},{\"title\":\"Test skipped\",\"value\":\"$UNIT_TESTS_SKIPPED\",\"short\":true},{\"title\":\"Code coverage\",\"value\":\"$UNIT_TESTS_FINAL_VALUE%\",\"short\":true}]}]}" https://hooks.slack.com/services/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
+                  curl -X POST --data-urlencode "payload={\"username\":\"Test Ghost\",\"icon_emoji\":\":ghost:\",\"attachments\":[{\"color\":\"$UNIT_TESTS_COLOR\",\"text\":\"$SLACK_MESSAGE tests $UNIT_TESTS_FINAL_STATUS for $UNIT_TESTS_USER in $GIT_BRANCH for repo $GITHUB_REPOSITORY\",\"fields\":[{\"title\":\"Test ran\",\"value\":\"$UNIT_TESTS_RAN\",\"short\":true},{\"title\":\"Test passing\",\"value\":\"$UNIT_TESTS_PASSING\",\"short\":true},{\"title\":\"Test failing\",\"value\":\"$UNIT_TESTS_FAILING\",\"short\":true},{\"title\":\"Test skipped\",\"value\":\"$UNIT_TESTS_SKIPPED\",\"short\":true},{\"title\":\"Code coverage\",\"value\":\"$UNIT_TESTS_FINAL_VALUE%\",\"short\":true}]}]}" $SLACKURL
+              env:
+                  SLACKURL: ${{ secrets.SLACKURL }}
     badge:
         name: Create result badge
         runs-on: ubuntu-latest
@@ -161,7 +163,7 @@ jobs:
                   echo "		<text x=\"1235\" y=\"140\" transform=\"scale(.1)\" textLength=\"1650\">$UNIT_TESTS_PASSING passed, $UNIT_TESTS_FAILING failed, $UNIT_TESTS_SKIPPED skipped</text>" >> Tests.svg
                   echo "	</g> " >> Tests.svg
                   echo "</svg>" >> Tests.svg
-                  mkdir asset || true
+                  mkdir asset
                   cp Tests.svg asset/Tests_$GIT_BRANCH.svg
                   cp Status.svg asset/Status_$GIT_BRANCH.svg
                   git add asset/Tests_$GIT_BRANCH.svg
