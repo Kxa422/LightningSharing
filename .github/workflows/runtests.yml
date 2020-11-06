@@ -203,7 +203,7 @@ jobs:
                   unzip sonar-scanner-cli-4.3.0.2102-linux.zip
                   rm sonar-scanner-cli-4.3.0.2102-linux.zip
                   ls -altr
-                  ./sonar-scanner-4.3.0.2102-linux/bin/sonar-scanner -D"sonar.projectKey=$SONAR_PROJECT" -D"sonar.organization=$SONAR_ORG" -D"sonar.sources=force-app" -D"sonar.exclusions=force-app/main/default/profiles/*.xml, force-app/main/default/permissionsets/*.xml, force-app/main/default/customMetadata/*.xml, force-app/main/default/objects/*, force-app/main/default/flows/*, force-app/main/default/flowDefinitions/*, force-app/main/default/layouts/*" -D"sonar.host.url=$SONAR_URL" -D"sonar.login=$SONAR_LOGIN" -D"sonar.apex.coverage.reportPath=TestResult/test-result-codecoverage.json"
+                  ./sonar-scanner-4.3.0.2102-linux/bin/sonar-scanner -D"sonar.projectKey=$SONAR_PROJECT" -D"sonar.organization=$SONAR_ORG" -D"sonar.sources=force-app" -D"sonar.exclusions=force-app/main/default/profiles/*.xml, force-app/main/default/permissionsets/*.xml, force-app/main/default/customMetadata/*.xml, force-app/main/default/objects/*, force-app/main/default/flows/*, force-app/main/default/flowDefinitions/*, force-app/main/default/layouts/*" -D"sonar.host.url=$SONAR_URL" -D"sonar.login=$SONAR_LOGIN" -D"sonar.apex.coverage.reportPath=TestResult/test-result-codecoverage.json" -D"sonar.branch.name=master"
               env:
                   SONAR_PROJECT: ${{ secrets.SONAR_PROJECT }}
                   SONAR_ORG: ${{ secrets.SONAR_ORG }}
